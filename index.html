@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аніме Тір-Ліст</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #09090f; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 16px 12px 60px; min-height: 100vh; }
+.subtitle { text-align: center; font-size: 10px; letter-spacing: 5px; color: #444; text-transform: uppercase; margin-bottom: 6px; }
+h1 { text-align: center; font-size: clamp(22px, 4vw, 48px); font-weight: 900; background: linear-gradient(135deg, #f5c518, #4caf6f, #f57c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; margin-bottom: 4px; }
+.divider { height: 2px; width: 50px; background: linear-gradient(90deg, #f5c518, #b71c1c); margin: 8px auto 16px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 8px; max-width: 900px; margin-left: auto; margin-right: auto; }
+.tbtn { border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; background: #13131a; transition: opacity 0.15s; }
+.tbtn:hover { opacity: 0.8; }
+.poster-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 10px; }
+.poster-btn { background: linear-gradient(135deg, #9d4edd, #4cc9f0); border: none; border-radius: 8px; padding: 8px 20px; color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
+.poster-btn:disabled { opacity: 0.5; cursor: default; }
+.cloud-bar { max-width: 900px; margin: 0 auto 14px; background: #111118; border-radius: 10px; border: 1px solid #1e1e2e; padding: 14px; }
+.cloud-title { font-size: 11px; color: #555; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
+.cloud-status { font-size: 12px; margin-bottom: 10px; padding: 7px 10px; border-radius: 7px; }
+.cloud-status.ok { color: #4caf6f; background: #0a1f12; border: 1px solid #4caf6f33; }
+.cloud-status.warn { color: #f5c518; background: #1f1a00; border: 1px solid #f5c51833; }
+.cloud-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.cbtn { border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.setup-area { margin-top: 10px; }
+.setup-area label { font-size: 11px; color: #666; display: block; margin-bottom: 5px; }
+.setup-area input { width: 100%; background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 7px; padding: 9px 12px; color: #e0e0e0; font-size: 12px; outline: none; font-family: monospace; margin-bottom: 8px; }
+.setup-area input:focus { border-color: #4cc9f0; }
+.hint { max-width: 900px; margin: 0 auto 12px; text-align: center; font-size: 12px; border-radius: 8px; padding: 7px 12px; transition: all 0.2s; border: 1px solid transparent; }
+.hint.active { color: #f5c518; background: #1a1a0022; border-color: #f5c51833; }
+.hint.idle { color: #444; }
+.add-row { display: flex; gap: 8px; max-width: 900px; margin: 0 auto 16px; }
+.add-row input { flex: 1; background: #13131a; border: 1px solid #2a2a3a; border-radius: 8px; padding: 10px 14px; color: #e0e0e0; font-size: 14px; outline: none; }
+.add-row button { background: linear-gradient(135deg, #f5c518, #f57c00); border: none; border-radius: 8px; padding: 10px 20px; color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; }
+.tiers { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 5px; }
+.tier-row { display: flex; align-items: stretch; border-radius: 10px; overflow: hidden; border: 2px solid #1e1e2e; transition: all 0.15s; }
+.tier-row.target { transform: scale(1.005); }
+.tier-label { width: 52px; min-width: 52px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.4); flex-shrink: 0; font-size: 22px; letter-spacing: -1px; }
+.tier-label.small { font-size: 15px; }
+.tier-items { flex: 1; min-height: 70px; padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+.empty-hint { font-size: 12px; align-self: center; pointer-events: none; }
+.chip { position: relative; display: inline-flex; flex-direction: column; align-items: center; border: 1.5px solid #2a2a3a; border-radius: 7px; padding: 5px 9px; cursor: pointer; user-select: none; transition: all 0.12s; background: #16161f; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.chip.has-poster { padding: 5px 5px 6px; width: 80px; }
+@media(min-width:600px){.chip.has-poster{width:90px;}}
+@media(min-width:900px){.chip.has-poster{width:100px;}}
+.chip.selected { transform: scale(1.05); }
+.chip-remove { position: absolute; top: 3px; right: 4px; color: #444; font-size: 10px; cursor: pointer; z-index: 2; }
+.chip-remove:hover { color: #ef6b6b; }
+.chip img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 5px; display: block; }
+.chip-label { font-size: 10px; color: #aaa; margin-top: 4px; text-align: center; line-height: 1.3; width: 100%; word-break: break-word; white-space: normal; }
+@media(min-width:900px){.chip-label{font-size:11px;}}
+.chip-inline { display: flex; align-items: center; gap: 5px; }
+.chip-num { font-size: 10px; font-weight: 700; color: #555; min-width: 16px; text-align: right; flex-shrink: 0; }
+.chip-name { font-size: 13px; color: #bbb; }
+.pool { max-width: 900px; margin: 14px auto 0; background: #111118; border-radius: 10px; border: 1.5px dashed #252535; padding: 12px 10px; }
+.pool-title { font-size: 10px; letter-spacing: 3px; color: #444; text-transform: uppercase; margin-bottom: 10px; }
+.pool-items { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; }
+.toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1a1a28; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 600; z-index: 9999; white-space: nowrap; pointer-events: none; border: 1px solid; }
+.modal-bg { position: fixed; inset: 0; background: #000000dd; display: flex; align-items: center; justify-content: center; z-index: 998; padding: 16px; }
+.modal { background: #13131a; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; width: 100%; max-width: 520px; }
+.modal h3 { font-size: 15px; margin-bottom: 10px; }
+.modal textarea { width: 100%; height: 160px; background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 10px; color: #e0e0e0; font-size: 12px; resize: vertical; outline: none; font-family: monospace; }
+.modal-btns { display: flex; gap: 8px; margin-top: 10px; }
+.modal-btns button { flex: 1; border: none; border-radius: 8px; padding: 10px 0; font-weight: 700; cursor: pointer; font-size: 14px; }
+#posterModal { position: fixed; inset: 0; background: #000000ee; display: none; align-items: center; justify-content: center; z-index: 9000; padding: 16px; overflow-y: auto; }
+#posterModal.show { display: flex; }
+.poster-confirm { background: #13131a; border: 1px solid #2a2a3a; border-radius: 14px; padding: 20px; width: 100%; max-width: 400px; text-align: center; margin: auto; }
+.poster-confirm h3 { font-size: 12px; color: #666; margin-bottom: 4px; font-weight: 400; }
+.pc-name { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px; line-height: 1.3; }
+.pc-img-wrap img { width: 120px; height: 170px; object-fit: cover; border-radius: 8px; border: 2px solid #2a2a3a; }
+.pc-img-wrap .no-img { width: 120px; height: 170px; background: #1a1a28; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid #2a2a3a; margin: 0 auto; }
+.pc-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.pc-actions button { border: none; border-radius: 9px; padding: 11px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; }
+.btn-accept { background: #4caf6f; color: #fff; }
+.btn-skip { background: #1e1e2e; color: #aaa; border: 1px solid #2a2a3a !important; }
+.search-row { display: flex; gap: 6px; margin-top: 10px; }
+.search-row input { flex: 1; background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 7px; padding: 8px 10px; color: #e0e0e0; font-size: 13px; outline: none; }
+.search-row button { background: #4cc9f0; border: none; border-radius: 7px; padding: 8px 14px; color: #000; font-weight: 700; cursor: pointer; }
+.alt-results { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; justify-content: center; max-height: 220px; overflow-y: auto; }
+.alt-item { cursor: pointer; border-radius: 6px; overflow: hidden; border: 2px solid transparent; transition: border-color 0.1s; flex-shrink: 0; }
+.alt-item:hover,.alt-item.chosen { border-color: #4cc9f0; }
+.alt-item img { width: 56px; height: 80px; object-fit: cover; display: block; }
+.alt-item div { font-size: 9px; color: #888; text-align: center; padding: 2px 3px; max-width: 56px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; background: #0a0a0f; }
+@media(min-width:900px){body{padding:24px 24px 60px;}.tier-label{width:60px;min-width:60px;font-size:26px;}.tier-label.small{font-size:18px;}}
+</style>
+</head>
+<body>
+<div class="subtitle">Мій</div>
+<h1>АНІМЕ ТІР-ЛІСТ</h1>
+<div class="divider"></div>
+<div class="toolbar" id="toolbar"></div>
+<div class="poster-bar">
+  <button class="poster-btn" id="fetchBtn" onclick="startFetchPosters()">🖼 Завантажити постери</button>
+</div>
+<div class="cloud-bar">
+  <div class="cloud-title">☁️ Хмарне збереження</div>
+  <div class="cloud-status warn" id="cloudStatus">⚠️ Не налаштовано — натисни ⚙️</div>
+  <div class="cloud-btns">
+    <button class="cbtn" style="background:linear-gradient(135deg,#4caf6f,#1a6b3a);color:#fff" onclick="cloudSave()">💾 Зберегти</button>
+    <button class="cbtn" style="background:#13131a;border:1px solid #4cc9f044;color:#4cc9f0" onclick="cloudLoad()">📥 Завантажити</button>
+    <button class="cbtn" onclick="toggleSetup()" style="background:#13131a;border:1px solid #555;color:#888">⚙️ Налаштування</button>
+  </div>
+  <div class="setup-area" id="setupArea" style="display:none">
+    <label>Personal Access Token (зберігається тільки у браузері):</label>
+    <input type="password" id="tokenInput" placeholder="nfp_xxxxx..." autocomplete="off">
+    <button onclick="saveSetup()" style="background:#4cc9f0;border:none;border-radius:7px;padding:8px 16px;color:#000;font-weight:700;cursor:pointer;font-size:13px">Зберегти</button>
+    <button onclick="clearSetup()" style="background:none;border:none;color:#555;cursor:pointer;font-size:12px;margin-left:10px">Очистити</button>
+    <p style="font-size:10px;color:#444;margin-top:8px">Токен використовується тільки для збереження даних на Netlify.</p>
+  </div>
+</div>
+<div class="hint idle" id="hint">👆 Натисни тайтл → потім тір або інший тайтл</div>
+<div class="add-row">
+  <input id="addInput" placeholder="Додати аніме..." onkeydown="if(event.key==='Enter') addAnime()">
+  <button onclick="addAnime()">+</button>
+</div>
+<div class="tiers" id="tiers"></div>
+<div class="pool">
+  <div class="pool-title" id="poolTitle">Не розподілено · 0</div>
+  <div class="pool-items" id="poolItems"></div>
+</div>
+<div id="toast" class="toast" style="display:none"></div>
+<div id="modalBg" class="modal-bg" style="display:none">
+  <div class="modal">
+    <h3>📦 Імпорт JSON</h3>
+    <textarea id="importText" placeholder="Встав JSON сюди..."></textarea>
+    <div class="modal-btns">
+      <button style="background:#4caf6f;color:#fff" onclick="doImport()">Імпортувати</button>
+      <button style="background:#1e1e2e;color:#aaa;border:1px solid #2a2a3a" onclick="document.getElementById('modalBg').style.display='none'">Скасувати</button>
+    </div>
+  </div>
+</div>
+<div id="posterModal">
+  <div class="poster-confirm">
+    <h3 id="pmProgress">Постер 1 з 10</h3>
+    <div class="pc-name" id="pmName"></div>
+    <div class="pc-img-wrap" id="pmImgWrap"></div>
+    <div class="pc-actions" id="pmActions"></div>
+    <div class="search-row">
+      <input id="pmSearchInput" placeholder="Пошук вручну...">
+      <button onclick="manualSearch()">🔍</button>
+    </div>
+    <div class="alt-results" id="altResults"></div>
+  </div>
+</div>
+<script>
+const TIERS_DEF=[{id:"S",label:"S",color:"#f5c518",bg:"#1f1a00"},{id:"A+",label:"A+",color:"#1a6b3a",bg:"#081510"},{id:"A",label:"A",color:"#4caf6f",bg:"#0a1f12"},{id:"B",label:"B",color:"#f57c00",bg:"#1f1000"},{id:"C",label:"C",color:"#8a8a9a",bg:"#131318"},{id:"D",label:"D",color:"#ef6b6b",bg:"#1f0a0a"},{id:"E",label:"E",color:"#b71c1c",bg:"#160404"}];
+const SAMPLE=["Attack on Titan","Fullmetal Alchemist","Death Note","Demon Slayer","Hunter x Hunter","Steins;Gate","Vinland Saga","Berserk","One Punch Man","Jujutsu Kaisen","Mob Psycho 100","Cowboy Bebop"];
+const SK="anime-tierlist-v1",PK="anime-posters-v1";
+let state={tiers:Object.fromEntries(TIERS_DEF.map(t=>[t.id,[]])),pool:SAMPLE.map((n,i)=>({id:i,name:n})),nextId:SAMPLE.length};
+let posters={},selected=null,chosenImg=null;
+function save(){try{localStorage.setItem(SK,JSON.stringify(state));}catch{}}
+function savePosters(){try{localStorage.setItem(PK,JSON.stringify(posters));}catch{}}
+function loadLocal(){try{const r=localStorage.getItem(SK);if(r)state=JSON.parse(r);}catch{}try{const r=localStorage.getItem(PK);if(r)posters=JSON.parse(r);}catch{}}
+function getToken(){return localStorage.getItem("netlify-token")||"";}
+function toggleSetup(){const el=document.getElementById("setupArea");el.style.display=el.style.display==="none"?"block":"none";if(el.style.display==="block")document.getElementById("tokenInput").value=getToken();}
+function saveSetup(){const t=document.getElementById("tokenInput").value.trim();if(!t){showToast("⚠️ Введи токен","#f5c518");return;}localStorage.setItem("netlify-token",t);document.getElementById("setupArea").style.display="none";updateCloudStatus();showToast("✅ Токен збережено!");}
+function clearSetup(){localStorage.removeItem("netlify-token");document.getElementById("tokenInput").value="";updateCloudStatus();showToast("🗑 Токен видалено");}
+function updateCloudStatus(){const st=document.getElementById("cloudStatus");if(getToken()){st.className="cloud-status ok";st.textContent="✅ Налаштовано — можна зберігати та завантажувати";}else{st.className="cloud-status warn";st.textContent="⚠️ Не налаштовано — натисни ⚙️ і введи токен";}}
+async function cloudSave(){const token=getToken();if(!token){showToast("⚠️ Введи токен в ⚙️","#f5c518");return;}showToast("💾 Зберігаю...","#4cc9f0");try{const payload={...state,posterUrls:posters};const res=await fetch("/.netlify/functions/blob",{method:"PUT",headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);showToast("✅ Збережено в хмару!");}catch(e){showToast("❌ "+e.message,"#ef6b6b");}}
+async function cloudLoad(){const token=getToken();if(!token){showToast("⚠️ Введи токен в ⚙️","#f5c518");return;}showToast("📥 Завантажую...","#4cc9f0");try{const res=await fetch("/.netlify/functions/blob",{headers:{"Authorization":`Bearer ${token}`}});const data=await res.json();if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);if(!data.tiers||!data.pool)throw new Error("Невірний формат");if(data.posterUrls){posters=data.posterUrls;savePosters();delete data.posterUrls;}state=data;save();render();showToast("✅ Завантажено!");}catch(e){showToast("❌ "+e.message,"#ef6b6b");}}
+function buildNumberMap(){const map={};let n=1;for(const t of TIERS_DEF)for(const item of state.tiers[t.id])map[item.id]=n++;return map;}
+function getAllItems(){const all=[];for(const t of TIERS_DEF)for(const item of state.tiers[t.id])all.push(item);for(const item of state.pool)all.push(item);return all;}
+function showToast(msg,color="#4caf6f"){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";t.style.color=color;t.style.borderColor=color;t.style.boxShadow=`0 0 20px ${color}44`;clearTimeout(t._tid);t._tid=setTimeout(()=>t.style.display="none",3000);}
+function doImport(){try{const data=JSON.parse(document.getElementById("importText").value);if(data.tiers&&data.pool){state=data;save();document.getElementById("modalBg").style.display="none";document.getElementById("importText").value="";render();showToast("✅ Імпортовано!");}else showToast("❌ Невірний формат","#ef6b6b");}catch{showToast("❌ Помилка JSON","#ef6b6b");}}
+function exportText(){const lines=[];for(const t of TIERS_DEF){if(state.tiers[t.id].length>0){lines.push(`[${t.label}]`);state.tiers[t.id].forEach((item,i)=>lines.push(`${i+1}. ${item.name}`));}}if(state.pool.length>0){lines.push("[Не розподілено]");state.pool.forEach(item=>lines.push(`- ${item.name}`));}navigator.clipboard?.writeText(lines.join("\n")).then(()=>showToast("📋 Скопійовано!")).catch(()=>showToast("Помилка","#ef6b6b"));}
+function exportJSON(){navigator.clipboard?.writeText(JSON.stringify(state,null,2)).then(()=>showToast("📦 JSON скопійовано!")).catch(()=>showToast("Помилка","#ef6b6b"));}
+function clearAll(){if(!confirm("Скинути всі дані?"))return;localStorage.removeItem(SK);localStorage.removeItem(PK);state={tiers:Object.fromEntries(TIERS_DEF.map(t=>[t.id,[]])),pool:SAMPLE.map((n,i)=>({id:i,name:n})),nextId:SAMPLE.length};posters={};selected=null;render();showToast("🗑 Скинуто");}
+function addAnime(){const inp=document.getElementById("addInput");const name=inp.value.trim();if(!name)return;state.pool.push({id:state.nextId++,name});save();render();inp.value="";}
+async function searchJikan(query,limit=6){try{const res=await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=${limit}`);if(!res.ok)return[];const data=await res.json();return(data.data||[]).map(a=>({title:a.title,img:a.images?.jpg?.large_image_url||null})).filter(a=>a.img);}catch{return[];}}
+async function startFetchPosters(){const all=getAllItems();const missing=all.filter(item=>!posters[item.name]);if(!missing.length){showToast("✅ Всі постери вже є!");return;}document.getElementById("fetchBtn").disabled=true;document.getElementById("fetchBtn").textContent="⏳ Завантаження...";for(let i=0;i<missing.length;i++){const item=missing[i];const results=await searchJikan(item.name,6);await new Promise(r=>setTimeout(r,300));const chosen=await showPosterConfirm(item.name,results,i,missing.length);posters[item.name]=chosen==="skip"?"none":(chosen||"none");savePosters();render();}document.getElementById("fetchBtn").disabled=false;document.getElementById("fetchBtn").textContent="🖼 Завантажити постери";const found=Object.values(posters).filter(v=>v&&v!=="none").length;showToast(`✅ ${found} постерів! Збережи в хмару 💾`);}
+function showPosterConfirm(animeName,results,idx,total){return new Promise(resolve=>{chosenImg=results[0]?.img||null;const modal=document.getElementById("posterModal");modal.className="show";document.getElementById("pmProgress").textContent=`Постер ${idx+1} з ${total}`;document.getElementById("pmName").textContent=animeName;document.getElementById("pmSearchInput").value=animeName;renderPosterPreview(chosenImg);renderAltResults(results);const actions=document.getElementById("pmActions");actions.innerHTML="";const a=document.createElement("button");a.className="btn-accept";a.textContent=chosenImg?"✅ Зберегти цей постер":"⏭ Без постера";a.onclick=()=>{modal.className="";resolve(chosenImg||"none");};actions.appendChild(a);const s=document.createElement("button");s.className="btn-skip";s.textContent="⏭ Пропустити";s.onclick=()=>{modal.className="";resolve("skip");};actions.appendChild(s);});}
+function renderPosterPreview(img){const wrap=document.getElementById("pmImgWrap");wrap.innerHTML="";if(img){const el=document.createElement("img");el.src=img;el.onerror=()=>{wrap.innerHTML='<div class="no-img">❓</div>';chosenImg=null;};wrap.appendChild(el);}else{wrap.innerHTML='<div class="no-img">❓</div>';}}
+function renderAltResults(results){const altEl=document.getElementById("altResults");altEl.innerHTML="";results.forEach((r,ri)=>{const el=document.createElement("div");el.className="alt-item"+(ri===0?" chosen":"");el.innerHTML=`<img src="${r.img}"><div>${r.title}</div>`;el.onclick=()=>{document.querySelectorAll(".alt-item").forEach(x=>x.classList.remove("chosen"));el.classList.add("chosen");chosenImg=r.img;renderPosterPreview(r.img);};altEl.appendChild(el);});}
+async function manualSearch(){const q=document.getElementById("pmSearchInput").value.trim();if(!q)return;document.getElementById("altResults").innerHTML='<span style="color:#555;font-size:12px">Шукаю...</span>';const results=await searchJikan(q,8);if(!results.length){document.getElementById("altResults").innerHTML='<span style="color:#ef6b6b;font-size:12px">Нічого не знайдено</span>';return;}renderAltResults(results);}
+function handleChipClick(itemId,location){const item=findItem(itemId);if(!item)return;if(!selected){selected={item,from:location};updateHint();renderChips();return;}if(selected.item.id===itemId){selected=null;updateHint();renderChips();return;}if(selected.from===location){const list=location==="pool"?state.pool:state.tiers[location];const si=list.findIndex(x=>x.id===selected.item.id);list.splice(si,1);list.splice(list.findIndex(x=>x.id===itemId),0,selected.item);selected=null;save();render();return;}removeFromLocation(selected.item.id,selected.from);const tl=location==="pool"?state.pool:state.tiers[location];tl.splice(tl.findIndex(x=>x.id===itemId),0,selected.item);selected=null;save();render();}
+function handleTierClick(tierId){if(!selected)return;if(selected.from===tierId){selected=null;updateHint();renderChips();return;}removeFromLocation(selected.item.id,selected.from);state.tiers[tierId].push(selected.item);selected=null;save();render();}
+function removeFromLocation(itemId,location){if(location==="pool")state.pool=state.pool.filter(x=>x.id!==itemId);else state.tiers[location]=state.tiers[location].filter(x=>x.id!==itemId);}
+function returnToPool(tierId,itemId){const item=state.tiers[tierId].find(x=>x.id===itemId);if(!item)return;state.tiers[tierId]=state.tiers[tierId].filter(x=>x.id!==itemId);state.pool.push(item);if(selected?.item.id===itemId)selected=null;save();render();}
+function deleteFromPool(itemId){state.pool=state.pool.filter(x=>x.id!==itemId);if(selected?.item.id===itemId)selected=null;save();render();}
+function findItem(id){for(const t of TIERS_DEF){const f=state.tiers[t.id].find(x=>x.id===id);if(f)return f;}return state.pool.find(x=>x.id===id);}
+function updateHint(){const h=document.getElementById("hint");if(selected){h.className="hint active";h.textContent=`✦ "${selected.item.name}" — натисни тір або інший тайтл`;}else{h.className="hint idle";h.textContent="👆 Натисни тайтл → потім тір або інший тайтл";}}
+function makeChip(item,location,number){const poster=posters[item.name];const hasPoster=poster&&poster!=="none";const isSel=selected?.item.id===item.id;const tierDef=TIERS_DEF.find(t=>t.id===location);const color=tierDef?tierDef.color:"#888";const isSwap=selected&&selected.item.id!==item.id&&selected.from===location;const chip=document.createElement("div");chip.className="chip"+(hasPoster?" has-poster":"")+(isSel?" selected":"");chip.style.border=`1.5px solid ${isSel?color:isSwap?color+"66":"#2a2a3a"}`;chip.style.background=isSel?color+"28":isSwap?"#1e1e2e":"#16161f";if(isSel)chip.style.boxShadow=`0 0 10px ${color}44`;const rem=document.createElement("span");rem.className="chip-remove";rem.textContent="✕";rem.onclick=e=>{e.stopPropagation();location==="pool"?deleteFromPool(item.id):returnToPool(location,item.id);};chip.appendChild(rem);if(hasPoster){const img=document.createElement("img");img.src=poster;img.alt=item.name;img.onerror=()=>img.style.display="none";chip.appendChild(img);const lbl=document.createElement("div");lbl.className="chip-label";if(number!=null){const sp=document.createElement("span");sp.style.cssText=`color:${isSel?color:"#666"};font-weight:700`;sp.textContent=number+". ";lbl.appendChild(sp);}lbl.appendChild(document.createTextNode(item.name));chip.appendChild(lbl);}else{const row=document.createElement("div");row.className="chip-inline";if(number!=null){const num=document.createElement("span");num.className="chip-num";num.style.color=isSel?color:"#555";num.textContent=number+".";row.appendChild(num);}const name=document.createElement("span");name.className="chip-name";name.style.color=isSel?"#fff":"#bbb";name.textContent=item.name;row.appendChild(name);chip.appendChild(row);}chip.onclick=()=>handleChipClick(item.id,location);return chip;}
+function renderChips(){const numMap=buildNumberMap();for(const t of TIERS_DEF){const container=document.getElementById(`items-${t.id}`);if(!container)continue;container.innerHTML="";if(state.tiers[t.id].length===0){const isTarget=selected&&selected.from!==t.id;const empty=document.createElement("span");empty.className="empty-hint";empty.style.color=isTarget?t.color+"88":"#252535";empty.textContent=isTarget?"↓ Помістити сюди":"Порожньо";container.appendChild(empty);}else{for(const item of state.tiers[t.id])container.appendChild(makeChip(item,t.id,numMap[item.id]));}}const poolEl=document.getElementById("poolItems");poolEl.innerHTML="";document.getElementById("poolTitle").textContent=`Не розподілено · ${state.pool.length}`;if(state.pool.length===0){poolEl.innerHTML='<span style="color:#252535;font-size:12px">Всі тайтли розподілено 🎉</span>';}else{for(const item of state.pool)poolEl.appendChild(makeChip(item,"pool",null));}}
+function renderTierRows(){const container=document.getElementById("tiers");container.innerHTML="";for(const t of TIERS_DEF){const isTarget=selected&&selected.from!==t.id;const row=document.createElement("div");row.className="tier-row"+(isTarget?" target":"");row.style.border=`2px solid ${isTarget?t.color:"#1e1e2e"}`;row.style.boxShadow=isTarget?`0 0 20px ${t.color}44`:"none";const label=document.createElement("div");label.className="tier-label"+(t.label.length>1?" small":"");label.style.background=t.color;label.textContent=t.label;label.onclick=()=>handleTierClick(t.id);row.appendChild(label);const items=document.createElement("div");items.className="tier-items";items.id=`items-${t.id}`;items.style.background=t.bg;if(isTarget)items.onclick=()=>handleTierClick(t.id);row.appendChild(items);container.appendChild(row);}}
+function render(){renderTierRows();renderChips();updateHint();}
+function buildToolbar(){const tb=document.getElementById("toolbar");const btns=[{label:"📋 Копіювати текст",fn:exportText,color:"#4caf6f"},{label:"📦 JSON",fn:exportJSON,color:"#f5c518"},{label:"📥 Імпорт JSON",fn:()=>document.getElementById("modalBg").style.display="flex",color:"#9d4edd"},{label:"🗑 Скинути",fn:clearAll,color:"#555"}];for(const b of btns){const btn=document.createElement("button");btn.className="tbtn";btn.textContent=b.label;btn.style.border=`1px solid ${b.color}55`;btn.style.color=b.color;btn.onclick=b.fn;tb.appendChild(btn);}}
+loadLocal();buildToolbar();updateCloudStatus();render();
+</script>
+</body>
+</html>
