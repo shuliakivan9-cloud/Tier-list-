@@ -102,11 +102,11 @@ h1 { text-align: center; font-size: clamp(22px, 4vw, 48px); font-weight: 900; ba
     <button class="cbtn" onclick="toggleSetup()" style="background:#13131a;border:1px solid #555;color:#888">⚙️ Налаштування</button>
   </div>
   <div class="setup-area" id="setupArea" style="display:none">
-    <label>Personal Access Token (зберігається тільки у браузері):</label>
-    <input type="password" id="tokenInput" placeholder="nfp_xxxxx..." autocomplete="off">
+    <label>Пароль для збереження (той самий, що в EDIT_PASSWORD на Netlify):</label>
+    <input type="password" id="tokenInput" placeholder="твій пароль" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off">
     <button onclick="saveSetup()" style="background:#4cc9f0;border:none;border-radius:7px;padding:8px 16px;color:#000;font-weight:700;cursor:pointer;font-size:13px">Зберегти</button>
     <button onclick="clearSetup()" style="background:none;border:none;color:#555;cursor:pointer;font-size:12px;margin-left:10px">Очистити</button>
-    <p style="font-size:10px;color:#444;margin-top:8px">Токен використовується тільки для збереження даних на Netlify.</p>
+    <p style="font-size:10px;color:#444;margin-top:8px">Пароль потрібен лише для збереження. Завантажувати можна без нього.</p>
   </div>
 </div>
 <div class="hint idle" id="hint">👆 Натисни тайтл → потім тір або інший тайтл</div>
@@ -152,13 +152,13 @@ let posters={},selected=null,chosenImg=null;
 function save(){try{localStorage.setItem(SK,JSON.stringify(state));}catch{}}
 function savePosters(){try{localStorage.setItem(PK,JSON.stringify(posters));}catch{}}
 function loadLocal(){try{const r=localStorage.getItem(SK);if(r)state=JSON.parse(r);}catch{}try{const r=localStorage.getItem(PK);if(r)posters=JSON.parse(r);}catch{}}
-function getToken(){return localStorage.getItem("netlify-token")||"";}
+function getToken(){return localStorage.getItem("tierlist-pass")||"";}
 function toggleSetup(){const el=document.getElementById("setupArea");el.style.display=el.style.display==="none"?"block":"none";if(el.style.display==="block")document.getElementById("tokenInput").value=getToken();}
-function saveSetup(){const t=document.getElementById("tokenInput").value.trim();if(!t){showToast("⚠️ Введи токен","#f5c518");return;}localStorage.setItem("netlify-token",t);document.getElementById("setupArea").style.display="none";updateCloudStatus();showToast("✅ Токен збережено!");}
-function clearSetup(){localStorage.removeItem("netlify-token");document.getElementById("tokenInput").value="";updateCloudStatus();showToast("🗑 Токен видалено");}
-function updateCloudStatus(){const st=document.getElementById("cloudStatus");if(getToken()){st.className="cloud-status ok";st.textContent="✅ Налаштовано — можна зберігати та завантажувати";}else{st.className="cloud-status warn";st.textContent="⚠️ Не налаштовано — натисни ⚙️ і введи токен";}}
-async function cloudSave(){const token=getToken();if(!token){showToast("⚠️ Введи токен в ⚙️","#f5c518");return;}showToast("💾 Зберігаю...","#4cc9f0");try{const payload={...state,posterUrls:posters};const res=await fetch("/.netlify/functions/blob",{method:"PUT",headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);showToast("✅ Збережено в хмару!");}catch(e){showToast("❌ "+e.message,"#ef6b6b");}}
-async function cloudLoad(){const token=getToken();if(!token){showToast("⚠️ Введи токен в ⚙️","#f5c518");return;}showToast("📥 Завантажую...","#4cc9f0");try{const res=await fetch("/.netlify/functions/blob",{headers:{"Authorization":`Bearer ${token}`}});const data=await res.json();if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);if(!data.tiers||!data.pool)throw new Error("Невірний формат");if(data.posterUrls){posters=data.posterUrls;savePosters();delete data.posterUrls;}state=data;save();render();showToast("✅ Завантажено!");}catch(e){showToast("❌ "+e.message,"#ef6b6b");}}
+function saveSetup(){const t=document.getElementById("tokenInput").value.trim();if(!t){showToast("⚠️ Введи пароль","#f5c518");return;}localStorage.setItem("tierlist-pass",t);document.getElementById("setupArea").style.display="none";updateCloudStatus();showToast("✅ Пароль збережено!");}
+function clearSetup(){localStorage.removeItem("tierlist-pass");document.getElementById("tokenInput").value="";updateCloudStatus();showToast("🗑 Пароль видалено");}
+function updateCloudStatus(){const st=document.getElementById("cloudStatus");if(getToken()){st.className="cloud-status ok";st.textContent="✅ Пароль є — можна зберігати та завантажувати";}else{st.className="cloud-status warn";st.textContent="ℹ️ Завантажувати можна одразу. Щоб зберігати — натисни ⚙️ і введи пароль";}}
+async function cloudSave(){const pass=getToken();if(!pass){showToast("⚠️ Введи пароль в ⚙️","#f5c518");return;}showToast("💾 Зберігаю...","#4cc9f0");try{const res=await fetch("/.netlify/functions/blob",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,data:{...state,posterUrls:posters}})});const data=await res.json();if(!res.ok)throw new Error(data.error||("HTTP "+res.status));showToast("✅ Збережено в хмару!");}catch(e){showToast("❌ "+e.message,"#ef6b6b");}}
+async function cloudLoad(){showToast("📥 Завантажую...","#4cc9f0");try{const res=await fetch("/.netlify/functions/blob");const data=await res.json();if(!res.ok)throw new Error(data.error||("HTTP "+res.status));if(!data.tiers||!data.pool)throw new Error("Невірний формат");if(data.posterUrls){posters=data.posterUrls;savePosters();delete data.posterUrls;}state=data;save();render();showToast("✅ Завантажено!");}catch(e){showToast("❌ "+e.message,"#ef6b6b");}}
 function buildNumberMap(){const map={};let n=1;for(const t of TIERS_DEF)for(const item of state.tiers[t.id])map[item.id]=n++;return map;}
 function getAllItems(){const all=[];for(const t of TIERS_DEF)for(const item of state.tiers[t.id])all.push(item);for(const item of state.pool)all.push(item);return all;}
 function showToast(msg,color="#4caf6f"){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";t.style.color=color;t.style.borderColor=color;t.style.boxShadow=`0 0 20px ${color}44`;clearTimeout(t._tid);t._tid=setTimeout(()=>t.style.display="none",3000);}
